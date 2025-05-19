@@ -4,3 +4,20 @@ out = "out"
 libs = ["lib"]
 
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+
+
+[profile.sepolia]
+rpc_url = "${SEPOLIA_RPC_URL}"
+etherscan_api_key = "${SEPOLIA_ETHERSCAN_API_KEY}"
+
+[profile.ozean]
+rpc_url = "https://poseidon-testnet.rpc.caldera.xyz/http"
+chain_id = 31911
+
+[rpc_endpoints]
+sepolia = "${SEPOLIA_RPC_URL}"
+ozean = "https://poseidon-testnet.rpc.caldera.xyz/http"
+
+[etherscan]
+sepolia = { key = "${SEPOLIA_ETHERSCAN_API_KEY}", url = "https://api-sepolia.etherscan.io/api" }
+ozean = { key = "", url = "https://poseidon-testnet.explorer.caldera.xyz/api" }
