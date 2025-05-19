@@ -24,12 +24,7 @@ contract L2TokenTest is Test {
         otherAddress = vm.addr(2);
 
         // deploy the l2 token
-        token = new L2Token(
-            l2BridgeMock,
-            l1TokenMock,
-            TOKEN_NAME,
-            TOKEN_SYMBOL
-        );
+        token = new L2Token(l2BridgeMock, l1TokenMock, TOKEN_NAME, TOKEN_SYMBOL);
     }
 
     function test_InitialState() public view {
@@ -50,20 +45,13 @@ contract L2TokenTest is Test {
         token.mint(user1, mintAmount);
         vm.stopPrank();
 
-        assertEq(
-            token.balanceOf(user1),
-            mintAmount,
-            "User1 balance after mint mismatch"
-        );
-        assertEq(
-            token.totalSupply(),
-            mintAmount,
-            "Total supply after mint mismatch"
-        );
+        assertEq(token.balanceOf(user1), mintAmount, "User1 balance after mint mismatch");
+        assertEq(token.totalSupply(), mintAmount, "Total supply after mint mismatch");
     }
 
-    function testFail_Mint_NotByL2Bridge() public {
+    function test_RevertWhen_NonBridgeMints() public {
         vm.startPrank(otherAddress); // not the l2 bridge
+        vm.expectRevert("L2Token: caller is not the L2 Standard Bridge");
         token.mint(user1, 100 * 10 ** 18);
         vm.stopPrank();
     }
@@ -77,11 +65,7 @@ contract L2TokenTest is Test {
         token.mint(user1, initialMintAmount);
         vm.stopPrank();
 
-        assertEq(
-            token.balanceOf(user1),
-            initialMintAmount,
-            "User1 balance before burn incorrect"
-        );
+        assertEq(token.balanceOf(user1), initialMintAmount, "User1 balance before burn incorrect");
 
         // now, burn some tokens from user1, initiated by the bridge
         vm.startPrank(l2BridgeMock);
@@ -90,19 +74,11 @@ contract L2TokenTest is Test {
         token.burn(user1, burnAmount);
         vm.stopPrank();
 
-        assertEq(
-            token.balanceOf(user1),
-            initialMintAmount - burnAmount,
-            "User1 balance after burn mismatch"
-        );
-        assertEq(
-            token.totalSupply(),
-            initialMintAmount - burnAmount,
-            "Total supply after burn mismatch"
-        );
+        assertEq(token.balanceOf(user1), initialMintAmount - burnAmount, "User1 balance after burn mismatch");
+        assertEq(token.totalSupply(), initialMintAmount - burnAmount, "Total supply after burn mismatch");
     }
 
-    function testFail_Burn_NotByL2Bridge() public {
+    function test_RevertWhen_NonBridgeBurns() public {
         uint256 initialMintAmount = 500 * 10 ** 18;
         // mint some tokens first
         vm.startPrank(l2BridgeMock);
@@ -110,15 +86,19 @@ contract L2TokenTest is Test {
         vm.stopPrank();
 
         vm.startPrank(otherAddress); // not the l2 bridge
+        vm.expectRevert("L2Token: caller is not the L2 Standard Bridge");
         token.burn(user1, 100 * 10 ** 18);
         vm.stopPrank();
     }
 
-    function testFail_Burn_InsufficientBalance() public {
+    function test_RevertWhen_BurningWithInsufficientBalance() public {
         uint256 burnAmount = 100 * 10 ** 18;
         // user1 has 0 balance
 
         vm.startPrank(l2BridgeMock);
+        vm.expectRevert(
+            abi.encodeWithSignature("ERC20InsufficientBalance(address,uint256,uint256)", user1, 0, burnAmount)
+        );
         token.burn(user1, burnAmount);
         vm.stopPrank();
     }

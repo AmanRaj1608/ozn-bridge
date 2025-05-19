@@ -8,11 +8,10 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/interfaces/IERC165.sol";
 
 contract L1Token is ERC20, Ownable, IERC165 {
-    constructor(
-        string memory name,
-        string memory symbol,
-        uint256 initialSupply
-    ) ERC20(name, symbol) Ownable(msg.sender) {
+    constructor(string memory name, string memory symbol, uint256 initialSupply)
+        ERC20(name, symbol)
+        Ownable(msg.sender)
+    {
         _mint(msg.sender, initialSupply * (10 ** decimals()));
     }
 
@@ -21,12 +20,8 @@ contract L1Token is ERC20, Ownable, IERC165 {
     }
 
     // @note: implementing supportsInterface for ERC165 compatibility
-    function supportsInterface(
-        bytes4 interfaceId
-    ) public view virtual returns (bool) {
-        return
-            interfaceId == type(IERC165).interfaceId ||
-            interfaceId == type(IERC20).interfaceId ||
-            interfaceId == type(IERC20Metadata).interfaceId;
+    function supportsInterface(bytes4 interfaceId) public view virtual returns (bool) {
+        return interfaceId == type(IERC165).interfaceId || interfaceId == type(IERC20).interfaceId
+            || interfaceId == type(IERC20Metadata).interfaceId;
     }
 }

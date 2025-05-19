@@ -6,13 +6,9 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 // Minimal interface for the L2StandardBridge
 interface IL2StandardBridge {
-    function withdrawTo(
-        address _l2Token,
-        address _to,
-        uint256 _amount,
-        uint32 _minGasLimit,
-        bytes calldata _extraData
-    ) external payable;
+    function withdrawTo(address _l2Token, address _to, uint256 _amount, uint32 _minGasLimit, bytes calldata _extraData)
+        external
+        payable;
 }
 
 contract BridgeL2ToL1 is Script {
@@ -26,22 +22,14 @@ contract BridgeL2ToL1 is Script {
 
         // Address of your L2 token on Ozean
         address l2TokenAddress = vm.envAddress("L2_TOKEN_ADDRESS");
-        require(
-            l2TokenAddress != address(0),
-            "L2_TOKEN_ADDRESS env var must be set."
-        );
+        require(l2TokenAddress != address(0), "L2_TOKEN_ADDRESS env var must be set.");
 
         // L2 Standard Bridge address on Ozean
-        address l2StandardBridgeAddr = vm.envAddress(
-            "L2_STANDARD_BRIDGE_OZEAN"
-        );
+        address l2StandardBridgeAddr = vm.envAddress("L2_STANDARD_BRIDGE_OZEAN");
         if (l2StandardBridgeAddr == address(0)) {
             l2StandardBridgeAddr = 0x4200000000000000000000000000000000000010;
         }
-        require(
-            l2StandardBridgeAddr != address(0),
-            "L2 Standard Bridge address for Ozean must be set and valid."
-        );
+        require(l2StandardBridgeAddr != address(0), "L2 Standard Bridge address for Ozean must be set and valid.");
 
         // Recipient address on L1 (Sepolia). Can be the same as deployer or different.
         address l1Recipient = vm.envAddress("L1_RECIPIENT_ADDRESS");
@@ -71,20 +59,14 @@ contract BridgeL2ToL1 is Script {
         console.log("L1 Recipient (Sepolia): %s", l1Recipient);
         console.log("Amount to Bridge: %s tokens (wei)", amountToBridge);
         console.log("Min Gas Limit for L1 Tx: %s", minGasLimitL1);
-        console.log(
-            "Broadcasting from address: %s",
-            vm.addr(deployerPrivateKey)
-        );
+        console.log("Broadcasting from address: %s", vm.addr(deployerPrivateKey));
 
         // --- Execution ---
         vm.startBroadcast(deployerPrivateKey);
 
         // 1. Approve the L2 Standard Bridge to spend the L2 tokens
         IERC20 l2Token = IERC20(l2TokenAddress);
-        uint256 currentAllowance = l2Token.allowance(
-            vm.addr(deployerPrivateKey),
-            l2StandardBridgeAddr
-        );
+        uint256 currentAllowance = l2Token.allowance(vm.addr(deployerPrivateKey), l2StandardBridgeAddr);
         if (currentAllowance < amountToBridge) {
             console.log(
                 "Current allowance is %s. Approving L2 Standard Bridge for %s tokens...",
@@ -94,10 +76,7 @@ contract BridgeL2ToL1 is Script {
             l2Token.approve(l2StandardBridgeAddr, type(uint256).max);
             console.log("Approval transaction sent.");
         } else {
-            console.log(
-                "Sufficient allowance (%s) already set for L2 Standard Bridge.",
-                currentAllowance
-            );
+            console.log("Sufficient allowance (%s) already set for L2 Standard Bridge.", currentAllowance);
         }
 
         // 2. Call withdrawTo on the L2 Standard Bridge

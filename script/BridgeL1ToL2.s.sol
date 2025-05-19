@@ -24,29 +24,18 @@ contract BridgeL1ToL2 is Script {
 
         // Address of your L1Token token on Sepolia
         address l1TokenAddress = vm.envAddress("L1_TOKEN_ADDRESS");
-        require(
-            l1TokenAddress != address(0),
-            "L1_TOKEN_ADDRESS env var must be set."
-        );
+        require(l1TokenAddress != address(0), "L1_TOKEN_ADDRESS env var must be set.");
 
         // Address of your L2Token token on Ozean
         address l2TokenAddress = vm.envAddress("L2_TOKEN_ADDRESS");
-        require(
-            l2TokenAddress != address(0),
-            "L2_TOKEN_ADDRESS env var must be set."
-        );
+        require(l2TokenAddress != address(0), "L2_TOKEN_ADDRESS env var must be set.");
 
         // L1 Standard Bridge address on Sepolia
-        address l1StandardBridgeAddr = vm.envAddress(
-            "L1_STANDARD_BRIDGE_SEPOLIA"
-        );
+        address l1StandardBridgeAddr = vm.envAddress("L1_STANDARD_BRIDGE_SEPOLIA");
         if (l1StandardBridgeAddr == address(0)) {
             l1StandardBridgeAddr = 0x8f42BD64b98f35EC696b968e3ad073886464dEC1; // using the proxy one address
         }
-        require(
-            l1StandardBridgeAddr != address(0),
-            "L1 Standard Bridge address for Sepolia must be set and valid."
-        );
+        require(l1StandardBridgeAddr != address(0), "L1 Standard Bridge address for Sepolia must be set and valid.");
 
         // Recipient address on L2 (Ozean). Can be the same as deployer or different.
         address l2Recipient = vm.envAddress("L2_RECIPIENT_ADDRESS");
@@ -77,20 +66,14 @@ contract BridgeL1ToL2 is Script {
         console.log("L2 Recipient (Ozean): %s", l2Recipient);
         console.log("Amount to Bridge: %s tokens (wei)", amountToBridge);
         console.log("Min Gas Limit for L2 Tx: %s", minGasLimitL2);
-        console.log(
-            "Broadcasting from address: %s",
-            vm.addr(deployerPrivateKey)
-        );
+        console.log("Broadcasting from address: %s", vm.addr(deployerPrivateKey));
 
         // --- Execution ---
         vm.startBroadcast(deployerPrivateKey);
 
         // 1. Approve the L1 Standard Bridge to spend the L1 tokens
         IERC20 l1Token = IERC20(l1TokenAddress);
-        uint256 currentAllowance = l1Token.allowance(
-            vm.addr(deployerPrivateKey),
-            l1StandardBridgeAddr
-        );
+        uint256 currentAllowance = l1Token.allowance(vm.addr(deployerPrivateKey), l1StandardBridgeAddr);
         if (currentAllowance < amountToBridge) {
             console.log(
                 "Current allowance is %s. Approving L1 Standard Bridge for %s tokens...",
@@ -101,10 +84,7 @@ contract BridgeL1ToL2 is Script {
             // l1Token.approve(l1StandardBridgeAddr, amountToBridge);
             console.log("Approval transaction sent.");
         } else {
-            console.log(
-                "Sufficient allowance (%s) already set for L1 Standard Bridge.",
-                currentAllowance
-            );
+            console.log("Sufficient allowance (%s) already set for L1 Standard Bridge.", currentAllowance);
         }
 
         // 2. Call bridgeERC20To on the L1 Standard Bridge

@@ -15,11 +15,7 @@ contract L1TokenTest is Test {
     string internal constant TOKEN_SYMBOL = "OZN";
 
     event Transfer(address indexed from, address indexed to, uint256 value);
-    event Approval(
-        address indexed owner,
-        address indexed spender,
-        uint256 value
-    );
+    event Approval(address indexed owner, address indexed spender, uint256 value);
 
     function setUp() public {
         owner = address(this);
@@ -47,11 +43,7 @@ contract L1TokenTest is Test {
         assertEq(token.symbol(), TOKEN_SYMBOL, "Token symbol mismatch");
         assertEq(token.decimals(), 18, "Token decimals mismatch");
         assertEq(token.totalSupply(), initialSupply, "Total supply mismatch");
-        assertEq(
-            token.balanceOf(address(this)),
-            initialSupply - (1000 * 10 ** 18),
-            "Deployer initial balance mismatch"
-        );
+        assertEq(token.balanceOf(address(this)), initialSupply - (1000 * 10 ** 18), "Deployer initial balance mismatch");
         assertEq(token.owner(), owner, "Owner mismatch");
     }
 
@@ -61,20 +53,13 @@ contract L1TokenTest is Test {
         token.mint(user2, mintAmount);
         vm.stopPrank();
 
-        assertEq(
-            token.balanceOf(user2),
-            mintAmount,
-            "User2 balance after mint mismatch"
-        );
-        assertEq(
-            token.totalSupply(),
-            initialSupply + mintAmount,
-            "Total supply after mint mismatch"
-        );
+        assertEq(token.balanceOf(user2), mintAmount, "User2 balance after mint mismatch");
+        assertEq(token.totalSupply(), initialSupply + mintAmount, "Total supply after mint mismatch");
     }
 
-    function testFail_MintNotOwner() public {
+    function test_RevertWhen_NonOwnerMints() public {
         vm.startPrank(user1);
+        vm.expectRevert(abi.encodeWithSignature("OwnableUnauthorizedAccount(address)", user1));
         token.mint(user2, 100 * 10 ** 18);
         vm.stopPrank();
     }
@@ -88,20 +73,15 @@ contract L1TokenTest is Test {
         token.transfer(user2, transferAmount);
         vm.stopPrank();
 
-        assertEq(
-            token.balanceOf(user1),
-            (1000 - 100) * 10 ** 18,
-            "User1 balance after transfer mismatch"
-        );
-        assertEq(
-            token.balanceOf(user2),
-            transferAmount,
-            "User2 balance after transfer mismatch"
-        );
+        assertEq(token.balanceOf(user1), (1000 - 100) * 10 ** 18, "User1 balance after transfer mismatch");
+        assertEq(token.balanceOf(user2), transferAmount, "User2 balance after transfer mismatch");
     }
 
-    function testFail_TransferInsufficientBalance() public {
+    function test_RevertWhen_TransferWithInsufficientBalance() public {
         vm.startPrank(user2);
+        vm.expectRevert(
+            abi.encodeWithSignature("ERC20InsufficientBalance(address,uint256,uint256)", user2, 0, 10 * 10 ** 18)
+        );
         token.transfer(user1, 10 * 10 ** 18);
         vm.stopPrank();
     }
@@ -117,11 +97,7 @@ contract L1TokenTest is Test {
         token.approve(user2, approveAmount);
         vm.stopPrank();
 
-        assertEq(
-            token.allowance(user1, user2),
-            approveAmount,
-            "Allowance mismatch"
-        );
+        assertEq(token.allowance(user1, user2), approveAmount, "Allowance mismatch");
 
         // user2 transfers 'transferAmount' from user1 to themselves
         vm.startPrank(user2);
@@ -130,32 +106,23 @@ contract L1TokenTest is Test {
         token.transferFrom(user1, user2, transferAmount);
         vm.stopPrank();
 
-        assertEq(
-            token.balanceOf(user1),
-            (1000 - 150) * 10 ** 18,
-            "User1 balance after transferFrom mismatch"
-        );
-        assertEq(
-            token.balanceOf(user2),
-            transferAmount,
-            "User2 balance after transferFrom mismatch"
-        );
-        assertEq(
-            token.allowance(user1, user2),
-            approveAmount - transferAmount,
-            "Allowance after transferFrom mismatch"
-        );
+        assertEq(token.balanceOf(user1), (1000 - 150) * 10 ** 18, "User1 balance after transferFrom mismatch");
+        assertEq(token.balanceOf(user2), transferAmount, "User2 balance after transferFrom mismatch");
+        assertEq(token.allowance(user1, user2), approveAmount - transferAmount, "Allowance after transferFrom mismatch");
     }
 
-    function testFail_TransferFromInsufficientAllowance() public {
+    function test_RevertWhen_TransferFromWithInsufficientAllowance() public {
         uint256 transferAmount = 50 * 10 ** 18;
         // user1 has not approved user2
         vm.startPrank(user2);
+        vm.expectRevert(
+            abi.encodeWithSignature("ERC20InsufficientAllowance(address,uint256,uint256)", user2, 0, transferAmount)
+        );
         token.transferFrom(user1, user2, transferAmount);
         vm.stopPrank();
     }
 
-    function testFail_TransferFromInsufficientBalance() public {
+    function test_RevertWhen_TransferFromWithInsufficientBalance() public {
         uint256 approveAmount = 2000 * 10 ** 18;
         uint256 transferAmount = 1500 * 10 ** 18;
 
@@ -164,25 +131,32 @@ contract L1TokenTest is Test {
         vm.stopPrank();
 
         vm.startPrank(user2);
+        vm.expectRevert(
+            abi.encodeWithSignature(
+                "ERC20InsufficientBalance(address,uint256,uint256)", user1, 1000 * 10 ** 18, transferAmount
+            )
+        );
         token.transferFrom(user1, user2, transferAmount);
         vm.stopPrank();
     }
 
     // Test transfer to address(0)
-    function testFail_TransferToZeroAddress() public {
+    function test_RevertWhen_TransferToZeroAddress() public {
         vm.startPrank(user1);
+        vm.expectRevert(abi.encodeWithSignature("ERC20InvalidReceiver(address)", address(0)));
         token.transfer(address(0), 10 * 10 ** 18);
         vm.stopPrank();
     }
 
     // Test transferFrom to address(0)
-    function testFail_TransferFromToZeroAddress() public {
+    function test_RevertWhen_TransferFromToZeroAddress() public {
         uint256 approveAmount = 100 * 10 ** 18;
         vm.startPrank(user1);
         token.approve(user2, approveAmount);
         vm.stopPrank();
 
         vm.startPrank(user2);
+        vm.expectRevert(abi.encodeWithSignature("ERC20InvalidReceiver(address)", address(0)));
         token.transferFrom(user1, address(0), 50 * 10 ** 18);
         vm.stopPrank();
     }

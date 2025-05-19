@@ -13,23 +13,13 @@ contract DeployL1Token is Script {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        L1Token token = new L1Token(
-            TOKEN_NAME,
-            TOKEN_SYMBOL,
-            INITIAL_SUPPLY_BASE_UNITS
-        );
+        L1Token token = new L1Token(TOKEN_NAME, TOKEN_SYMBOL, INITIAL_SUPPLY_BASE_UNITS);
 
         deployedTokenAddress = address(token);
         console.log("L1Token deployed to Sepolia at: %s", deployedTokenAddress);
         console.log("Initial supply: %s", INITIAL_SUPPLY_BASE_UNITS);
-        console.log(
-            "Actual total supply (with decimals): %s",
-            token.totalSupply()
-        );
-        console.log(
-            "Deployer (owner) balance: %s",
-            token.balanceOf(vm.addr(deployerPrivateKey))
-        );
+        console.log("Actual total supply (with decimals): %s", token.totalSupply());
+        console.log("Deployer (owner) balance: %s", token.balanceOf(vm.addr(deployerPrivateKey)));
 
         vm.stopBroadcast();
 
